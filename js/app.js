@@ -185,7 +185,14 @@
   /* =====================================================================
      پنجره‌ی استان — لیست مجازی
      ===================================================================== */
-  const CELL_H = 92, GAP = 10, ROW_H = CELL_H + GAP, MIN_COL = 190;
+  const CELL_H = 108, GAP = 10, ROW_H = CELL_H + GAP;
+
+  /* تعداد ستون‌ها: ۳ در دسکتاپ، ۲ در تبلت، ۱ در موبایل */
+  function calcCols(width) {
+    if (width >= 880) return 3;
+    if (width >= 520) return 2;
+    return 1;
+  }
   let rafPending = false;
   let contentEl = null;
 
@@ -247,7 +254,7 @@
     contentEl.innerHTML = '';
 
     const innerW = contentEl.clientWidth;
-    const cols = Math.max(1, Math.floor((innerW + GAP) / (MIN_COL + GAP)));
+    const cols = calcCols(innerW);
     const colW = (innerW - (cols - 1) * GAP) / cols;
     const totalRows = Math.ceil(filtered.length / cols);
     contentEl.style.height = (totalRows * ROW_H) + 'px';
@@ -295,7 +302,7 @@
     const idx = filtered.findIndex((v) => v.id === id);
     if (idx < 0) return;
     const innerW = contentEl ? contentEl.clientWidth : (modalList.clientWidth - 52);
-    const cols = Math.max(1, Math.floor((innerW + GAP) / (MIN_COL + GAP)));
+    const cols = calcCols(innerW);
     const row = Math.floor(idx / cols);
     modalList.scrollTop = row * ROW_H;
     renderList();
@@ -336,6 +343,21 @@
     ].filter(Boolean).join(' · ');
     $('#detailNote').textContent = v.note || 'جزئیات در حال تکمیل.';
     $('#detailSrc').textContent = 'منبع: ' + (v.source || 'نامشخص');
+
+    /* رسانه‌های اختیاری: ویدیو، عکس یا صدا */
+    const media = $('#detailMedia');
+    let m = '';
+    if (v.video) {
+      m += '<video class="media-video" controls preload="metadata" src="' + esc(v.video) + '"></video>';
+    } else if (v.photo) {
+      m += '<img class="media-photo" src="' + esc(v.photo) + '" alt="' + esc(v.name) + '">';
+    }
+    if (v.audio) {
+      m += '<audio class="media-audio" controls preload="none" src="' + esc(v.audio) + '"></audio>';
+    }
+    if (m) { media.innerHTML = m; media.classList.remove('hidden'); }
+    else { media.innerHTML = ''; media.classList.add('hidden'); }
+
     detail.classList.add('open');
     detail.setAttribute('aria-hidden', 'false');
   }
