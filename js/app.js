@@ -387,6 +387,9 @@
   function closeDetail() {
     detail.classList.remove('open');
     detail.setAttribute('aria-hidden', 'true');
+    if (currentVoice) {
+      try { currentVoice.pause(); currentVoice = null; } catch (e) {}
+    }
   }
 
   /* =====================================================================
@@ -506,16 +509,22 @@
     }, 850);
   }
 
-  /* موقع باز شدن یادنامه‌ی هر فرد صدا پخش می‌شود */
+  /* موقع باز شدن یادنامه‌ی هر فرد صدا پخش می‌شود
+     اولویت: صدای مراد ویسی (voice) → در نبودش، ناقوس یادبود */
+  let currentVoice = null;
   function playMemorialSound(v) {
     if (!soundOn) return;
-    if (v && v.audio) {
+    if (currentVoice) {
+      try { currentVoice.pause(); currentVoice = null; } catch (e) {}
+    }
+    if (v && v.voice) {
       try {
-        const a = new Audio(v.audio);
-        a.volume = 0.85;
-        a.play().catch(function () { playBell(); });
+        const a = new Audio(v.voice);
+        a.volume = 0.95;
+        currentVoice = a;
+        a.play().catch(function () { currentVoice = null; playBell(); });
         return;
-      } catch (e) { /* fallback به ناقوس */ }
+      } catch (e) { currentVoice = null; /* fallback به ناقوس */ }
     }
     playBell();
   }
