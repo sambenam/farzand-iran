@@ -72,15 +72,21 @@
   <div class="modal-backdrop" data-close="detail"></div>
   <div class="detail-dialog" role="dialog" aria-modal="true">
     <button class="modal-close" data-close="detail" aria-label="بستن">✕</button>
-    <div class="detail-avatar" id="detailAvatar"></div>
-    <h3 class="detail-name" id="detailName"></h3>
-    <div class="detail-meta" id="detailMeta"></div>
-    <div id="detailMedia" class="detail-media hidden"></div>
-    <div class="detail-info" id="detailInfo"></div>
-    <div class="detail-divider"></div>
-    <p class="detail-note" id="detailNote"></p>
-    <div class="detail-src" id="detailSrc"></div>
-    <p class="detail-tribute">یادش گرامی 🕊</p>
+    <div class="detail-layout">
+      <aside class="detail-side">
+        <div class="detail-photo" id="detailPhoto"></div>
+        <div id="detailMedia" class="detail-media hidden"></div>
+      </aside>
+      <div class="detail-main">
+        <h3 class="detail-name" id="detailName"></h3>
+        <div class="detail-meta" id="detailMeta"></div>
+        <div class="detail-info" id="detailInfo"></div>
+        <div class="detail-divider"></div>
+        <p class="detail-note" id="detailNote"></p>
+        <div class="detail-src" id="detailSrc"></div>
+        <p class="detail-tribute">یادش گرامی 🕊</p>
+      </div>
+    </div>
   </div>
 </div>
 

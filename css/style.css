@@ -248,11 +248,18 @@ body {
 }
 .v-top { display: flex; align-items: center; gap: 9px; width: 100%; min-width: 0; }
 .v-avatar {
-  flex: 0 0 32px; width: 32px; height: 32px; border-radius: 50%;
+  flex: 0 0 36px; width: 36px; height: 36px; border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
-  background: linear-gradient(135deg, #2a3350, #1b2233); color: var(--gold-soft);
-  font-weight: 800; font-size: .95rem; border: 1px solid rgba(180,200,230,.22);
+  background: linear-gradient(135deg, #38202a, #1c1726);
+  color: #e8bfae;
+  font-weight: 800; font-size: .95rem;
+  border: 1px solid rgba(208, 73, 63, .28);
+  overflow: hidden;
 }
+.v-avatar img {
+  width: 100%; height: 100%; object-fit: cover; border-radius: 50%; display: block;
+}
+.v-cell:hover .v-avatar { box-shadow: 0 0 14px rgba(208, 73, 63, .4); }
 .v-name { font-weight: 800; font-size: .98rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .v-meta { color: var(--muted); font-size: .78rem; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .v-note {
@@ -266,15 +273,28 @@ body {
 #detail { z-index: 60; }
 .detail-dialog {
   position: relative; z-index: 1;
-  width: min(470px, 94vw);
+  width: min(880px, 94vw);
+  max-height: min(86vh, 780px);
+  overflow-y: auto;
   background: linear-gradient(180deg, rgba(19,23,34,.99), rgba(10,12,19,.99));
   border: 1px solid var(--line); border-radius: 20px;
-  padding: 36px 30px 26px; text-align: center;
+  padding: 28px 32px 24px; text-align: right;
   box-shadow: 0 40px 120px rgba(0,0,0,.75);
   transform: translateY(16px) scale(.985);
   transition: transform .32s cubic-bezier(.2,.8,.2,1);
 }
 #detail.open .detail-dialog { transform: none; }
+
+/* چیدمان افقی: عکس در ستون کناری، اطلاعات در بدنه */
+.detail-layout { display: flex; gap: 28px; }
+.detail-side { flex: 0 0 240px; display: flex; flex-direction: column; gap: 12px; align-items: center; }
+.detail-main { flex: 1; min-width: 0; }
+.detail-photo { width: 100%; }
+.detail-photo-img {
+  width: 100%; max-height: 320px; object-fit: cover; border-radius: 16px;
+  border: 1px solid rgba(150,170,205,.14); display: block;
+  box-shadow: 0 18px 50px rgba(0,0,0,.55), 0 0 40px rgba(150, 26, 32, .12);
+}
 .detail-avatar {
   width: 76px; height: 76px; border-radius: 50%; margin: 4px auto 16px;
   display: flex; align-items: center; justify-content: center;
@@ -283,12 +303,12 @@ body {
   border: 1px solid rgba(180,200,230,.25);
   box-shadow: 0 0 0 6px rgba(180,200,230,.05);
 }
-.detail-name { font-size: 1.45rem; font-weight: 900; margin: 0 0 6px; }
-.detail-meta { color: var(--muted); font-size: .88rem; margin-bottom: 16px; }
-.detail-divider { width: 56px; height: 1px; background: var(--line); margin: 0 auto 16px; }
-.detail-note { color: #d3d8e1; line-height: 2.1; font-size: .98rem; margin: 0 0 18px; }
+.detail-name { font-size: 1.5rem; font-weight: 900; margin: 0 0 6px; }
+.detail-meta { color: var(--muted); font-size: .88rem; margin-bottom: 12px; }
+.detail-divider { width: 64px; height: 1px; background: var(--line); margin: 4px 0 14px; }
+.detail-note { color: #d3d8e1; line-height: 2.1; font-size: .97rem; margin: 0 0 16px; }
 .detail-src { display: inline-block; font-size: .76rem; color: var(--faint); background: rgba(255,255,255,.05); border-radius: 999px; padding: 4px 14px; }
-.detail-tribute { margin: 20px 0 0; color: var(--gold); font-size: .82rem; letter-spacing: .3px; }
+.detail-tribute { margin: 18px 0 0; color: #b98b77; font-size: .82rem; letter-spacing: .3px; text-align: center; }
 
 /* ============ رسانه در یادنامه (عکس / ویدیو / صدا) ============ */
 .detail-media { margin: 2px 0 14px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
@@ -326,6 +346,11 @@ body {
   .modal-head { padding: 20px 18px 12px; }
   .modal-search { padding: 12px 18px 4px; }
   .modal-list { padding: 12px 18px 20px; }
+  .detail-dialog { padding: 22px 18px 20px; }
+  .detail-layout { flex-direction: column; gap: 16px; }
+  .detail-side { flex: none; width: 100%; }
+  .detail-photo-img { max-height: 260px; }
+  .detail-info { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; }
@@ -354,8 +379,8 @@ body {
   border-radius: 2px;
 }
 .modal-province {
-  background: linear-gradient(115deg, #d0493f 0%, #8a181f 55%, #3c080c 100%);
-  -webkit-background-clip: text; background-clip: text; color: transparent;
+  color: #f2ede3;
+  text-shadow: 0 1px 12px rgba(255,255,255,.08);
 }
 .modal-count { display: inline-flex; align-items: center; gap: 8px; }
 .modal-count::before {
@@ -410,23 +435,25 @@ body {
   0%,100% { box-shadow: 0 0 0 0 rgba(208, 73, 63, .26), 0 0 0 6px rgba(180,200,230,.05); }
   50% { box-shadow: 0 0 0 9px rgba(208, 73, 63, .05), 0 0 26px rgba(208, 73, 63, .32), 0 0 0 6px rgba(180,200,230,.05); }
 }
-.detail-name {
-  background: linear-gradient(115deg, #d0493f 0%, #8a181f 55%, #3c080c 100%);
-  -webkit-background-clip: text; background-clip: text; color: transparent;
+.detail-name { color: #f4efe8; }
+.detail-name::after {
+  content: ""; display: block; width: 64px; height: 2px; margin-top: 7px;
+  background: linear-gradient(90deg, #c0392b, rgba(192,57,43,0));
+  border-radius: 2px;
 }
 
-/* جدول اطلاعات (تولد، محل زندگی، محل شهادت، شغل…) */
-.detail-info { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 0 0 6px; }
+/* جدول اطلاعات (تولد، جانسپاری، محل زندگی و جانسپاری، شغل، سن…) */
+.detail-info { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 0 0 12px; }
 .detail-info:empty { display: none; }
 .info-chip {
-  display: flex; flex-direction: column; align-items: center; gap: 1px;
+  display: flex; flex-direction: column; gap: 1px; text-align: right;
   background: rgba(255,255,255,.035); border: 1px solid var(--line); border-radius: 12px;
-  padding: 8px 14px; min-width: 88px;
+  padding: 8px 14px; min-width: 0;
   transition: border-color .2s, background .2s;
 }
 .info-chip:hover { border-color: rgba(208, 73, 63, .35); background: rgba(208, 73, 63, .06); }
 .info-k { font-size: .66rem; color: var(--faint); letter-spacing: .3px; }
-.info-v { font-size: .84rem; font-weight: 700; color: var(--ink); }
+.info-v { font-size: .85rem; font-weight: 700; color: var(--ink); line-height: 1.6; }
 
 /* قاب رسانه */
 .media-photo {

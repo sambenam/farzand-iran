@@ -283,7 +283,9 @@
         cell.style.setProperty('--i', idx);
         cell.innerHTML =
           '<span class="v-top">' +
-            '<span class="v-avatar">' + esc((v.name || '؟').trim().charAt(0)) + '</span>' +
+            '<span class="v-avatar">' + (v.photo
+              ? '<img src="' + esc(v.photo) + '" alt="' + esc(v.name) + '" loading="lazy">'
+              : esc((v.name || '؟').trim().charAt(0))) + '</span>' +
             '<span class="v-name">' + esc(v.name) + '</span>' +
           '</span>' +
           '<span class="v-meta">' + esc([v.age ? toFa(v.age) + ' ساله' : '', v.city].filter(Boolean).join(' · ')) + '</span>' +
@@ -339,7 +341,15 @@
   function openDetail(id) {
     const v = victims.find((x) => x.id === id);
     if (!v) return;
-    $('#detailAvatar').textContent = (v.name || '؟').trim().charAt(0);
+
+    /* عکس در ستون کناری؛ اگر نبود، دایره‌ی حرف اول */
+    const photoEl = $('#detailPhoto');
+    if (v.photo) {
+      photoEl.innerHTML = '<img class="detail-photo-img" src="' + esc(v.photo) + '" alt="' + esc(v.name) + '" loading="lazy">';
+    } else {
+      photoEl.innerHTML = '<div class="detail-avatar">' + esc((v.name || '؟').trim().charAt(0)) + '</div>';
+    }
+
     $('#detailName').textContent = v.name;
     $('#detailMeta').textContent = [
       v.city,
@@ -348,13 +358,13 @@
     $('#detailNote').textContent = v.note || 'جزئیات در حال تکمیل.';
     $('#detailSrc').textContent = 'منبع: ' + (v.source || 'نامشخص');
 
-    /* جدول اطلاعات: تولد، محل زندگی، محل شهادت، شغل، تاریخ، سن */
+    /* جدول اطلاعات */
     const infoRows = [];
     if (v.born) infoRows.push(['تاریخ تولد', v.born]);
+    if (v.dateFa) infoRows.push(['تاریخ جانسپاری', toFa(v.dateFa)]);
     if (v.lived) infoRows.push(['محل زندگی', v.lived]);
-    if (v.killedAt) infoRows.push(['محل شهادت', v.killedAt]);
+    if (v.killedAt) infoRows.push(['محل جانسپاری', v.killedAt]);
     if (v.occupation) infoRows.push(['شغل / تحصیل', v.occupation]);
-    if (v.dateFa) infoRows.push(['تاریخ شهادت', toFa(v.dateFa)]);
     if (v.age) infoRows.push(['سن', toFa(v.age) + ' ساله']);
     const infoEl = $('#detailInfo');
     infoEl.innerHTML = infoRows.map((r) =>
@@ -362,17 +372,11 @@
       '<span class="info-v">' + esc(r[1]) + '</span></span>'
     ).join('');
 
-    /* رسانه‌های اختیاری: ویدیو، عکس یا صدا */
+    /* رسانه: ویدیو و صدا */
     const media = $('#detailMedia');
     let m = '';
-    if (v.video) {
-      m += '<video class="media-video" controls preload="metadata" src="' + esc(v.video) + '"></video>';
-    } else if (v.photo) {
-      m += '<img class="media-photo" src="' + esc(v.photo) + '" alt="' + esc(v.name) + '">';
-    }
-    if (v.audio) {
-      m += '<audio class="media-audio" controls preload="none" src="' + esc(v.audio) + '"></audio>';
-    }
+    if (v.video) m += '<video class="media-video" controls preload="metadata" src="' + esc(v.video) + '"></video>';
+    if (v.audio) m += '<audio class="media-audio" controls preload="none" src="' + esc(v.audio) + '"></audio>';
     if (m) { media.innerHTML = m; media.classList.remove('hidden'); }
     else { media.innerHTML = ''; media.classList.add('hidden'); }
 
