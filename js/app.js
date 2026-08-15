@@ -54,7 +54,7 @@
           s: Math.random() * 0.35 + 0.08,
           a: Math.random() * 0.5 + 0.15,
           tw: Math.random() * Math.PI * 2,
-          warm: Math.random() < 0.7
+          warm: Math.random() < 0.28
         });
       }
     }
@@ -71,10 +71,10 @@
         ctx.beginPath();
         ctx.arc(d.x, d.y, d.r, 0, Math.PI * 2);
         ctx.fillStyle = d.warm
-          ? 'rgba(255,176,102,' + alpha + ')'
-          : 'rgba(200,214,240,' + (alpha * 0.8) + ')';
-        ctx.shadowColor = d.warm ? 'rgba(255,158,79,.9)' : 'rgba(180,200,240,.7)';
-        ctx.shadowBlur = 6;
+          ? 'rgba(210,150,110,' + alpha + ')'
+          : 'rgba(168,188,218,' + (alpha * 0.7) + ')';
+        ctx.shadowColor = d.warm ? 'rgba(210,150,110,.65)' : 'rgba(140,165,205,.55)';
+        ctx.shadowBlur = 5;
         ctx.fill();
       }
       ctx.shadowBlur = 0;
@@ -112,14 +112,8 @@
     requestAnimationFrame(step);
   }
   animateCount($('#totalCount'), totalCount, 1400);
-  $('#candlesLit').textContent = toFa(localStorage.getItem('candles') || 0) + ' شمع روشن شده';
 
-  $('#footerNote').innerHTML = esc(META.note || '') +
-    (META.sources && META.sources.length
-      ? '<br><span style="color:var(--faint)">منابع اولیه: ' +
-        META.sources.map((s) => '<a href="' + esc(s.url) + '" target="_blank" rel="noopener" style="color:var(--gold)">' + esc(s.name) + '</a>').join(' ، ') +
-        '</span>'
-      : '');
+  $('#footerNote').innerHTML = esc(META.note || '');
 
   /* =====================================================================
      پنل اسامی
@@ -257,7 +251,9 @@
     $('#btn2d').classList.toggle('active', v === '2d');
     map3d.style.display = v === '3d' ? '' : 'none';
     map2dWrap.classList.toggle('hidden', v !== '2d');
-    if (v === '3d' && window.APP3D) APP3D.onShow();
+    const hint = document.getElementById('mapHint');
+    if (hint) hint.classList.toggle('hidden', v !== '3d');
+    if (v === '3d' && window.APP3D) window.APP3D.onShow();
     if (v === '2d' && !svg2d) init2D();
     if (v === '3d' && selectedPid) highlightProvince(selectedPid);
   }
@@ -308,34 +304,6 @@
   searchInput.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') searchResults.classList.add('hidden');
   });
-
-  /* =====================================================================
-     شمع یادبود
-     ===================================================================== */
-  const CANDLE_KEY = 'candles';
-  function lightCandle() {
-    let n = parseInt(localStorage.getItem(CANDLE_KEY) || '0', 10) || 0;
-    n += 1;
-    localStorage.setItem(CANDLE_KEY, n);
-    $('#candlesLit').textContent = toFa(n) + ' شمع روشن شده';
-    spawnFloatingCandles(3);
-  }
-  function spawnFloatingCandles(count) {
-    const layer = $('#candleLayer');
-    const emojis = ['🕯', '🕯', '✨'];
-    for (let i = 0; i < count; i++) {
-      const s = document.createElement('span');
-      s.className = 'floating-candle';
-      s.textContent = emojis[Math.floor(Math.random() * emojis.length)];
-      s.style.left = (8 + Math.random() * 84) + 'vw';
-      s.style.setProperty('--drift', (Math.random() * 120 - 60) + 'px');
-      s.style.animationDelay = (Math.random() * 0.8) + 's';
-      s.style.fontSize = (1 + Math.random() * 1.2) + 'rem';
-      layer.appendChild(s);
-      setTimeout(() => s.remove(), 8000);
-    }
-  }
-  $('#btnCandle').addEventListener('click', lightCandle);
 
   /* =====================================================================
      اشتراک‌گذاری

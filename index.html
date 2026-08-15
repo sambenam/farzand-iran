@@ -13,10 +13,12 @@
 <body>
 
 <canvas id="bg" aria-hidden="true"></canvas>
+<div class="fog fog-a" aria-hidden="true"></div>
+<div class="fog fog-b" aria-hidden="true"></div>
 <div class="vignette" aria-hidden="true"></div>
 
 <header class="topbar">
-  <div class="brand"><span class="brand-mark">🕯</span><span>فرزندان ایران</span></div>
+  <div class="brand">فرزندان ایران</div>
   <div class="topbar-actions">
     <div class="search-box">
       <input id="search" type="text" placeholder="جست‌وجوی نام، شهر یا استان…" autocomplete="off" />
@@ -31,19 +33,19 @@
     <svg viewBox="0 0 64 118" width="54" height="100">
       <defs>
         <radialGradient id="glowGrad" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stop-color="#ffd9a0" stop-opacity="0.85"/>
-          <stop offset="55%" stop-color="#ff9e4f" stop-opacity="0.25"/>
-          <stop offset="100%" stop-color="#ff7a3d" stop-opacity="0"/>
+          <stop offset="0%" stop-color="#e8c79a" stop-opacity="0.7"/>
+          <stop offset="55%" stop-color="#c98a5f" stop-opacity="0.2"/>
+          <stop offset="100%" stop-color="#b25f3d" stop-opacity="0"/>
         </radialGradient>
       </defs>
       <circle class="candle-glow" cx="32" cy="46" r="30" fill="url(#glowGrad)"/>
       <g class="flame">
-        <path class="flame-outer" d="M32,12 C37,24 40,32 40,39 A8,8 0 0 1 24,39 C24,32 27,24 32,12 Z" fill="#ffb35c"/>
-        <path class="flame-inner" d="M32,26 C35,34 37,38 37,42 A5,5 0 0 1 27,42 C27,38 29,34 32,26 Z" fill="#ffe9c4"/>
+        <path class="flame-outer" d="M32,12 C37,24 40,32 40,39 A8,8 0 0 1 24,39 C24,32 27,24 32,12 Z" fill="#d99b62"/>
+        <path class="flame-inner" d="M32,26 C35,34 37,38 37,42 A5,5 0 0 1 27,42 C27,38 29,34 32,26 Z" fill="#f0dfc4"/>
       </g>
-      <rect x="26" y="60" width="12" height="50" rx="4" fill="#efe4cf"/>
-      <rect x="26" y="60" width="12" height="8" rx="4" fill="#d9c7a6"/>
-      <ellipse cx="32" cy="60" rx="7" ry="3" fill="#f7eedd"/>
+      <rect x="26" y="60" width="12" height="50" rx="4" fill="#d6cdc0"/>
+      <rect x="26" y="60" width="12" height="8" rx="4" fill="#b8ab99"/>
+      <ellipse cx="32" cy="60" rx="7" ry="3" fill="#e7dfd2"/>
     </svg>
   </div>
   <h1 class="hero-title">به یادِ <span class="accent">فرزندان ایران</span></h1>
@@ -53,10 +55,6 @@
     <span class="num" id="totalCount">۰</span>
     <span class="lbl">نامِ مستند تاکنون — فهرست در حال تکمیل</span>
   </div>
-  <div class="hero-actions">
-    <button id="btnCandle" class="btn primary">🕯 روشن کردن شمع یادبود</button>
-    <span id="candlesLit" class="candles-lit">۰ شمع روشن شده</span>
-  </div>
 </section>
 
 <section class="map-section">
@@ -65,10 +63,6 @@
       <button id="btn3d" class="seg active">نمای سه‌بعدی</button>
       <button id="btn2d" class="seg">نمای دوبعدی</button>
     </div>
-    <div class="legend">
-      <span class="lg"><i class="dot lit"></i>استانِ دارای نامِ مستند</span>
-      <span class="lg"><i class="dot dark"></i>در انتظار تکمیل فهرست</span>
-    </div>
   </div>
 
   <div id="mapWrap">
@@ -76,7 +70,7 @@
     <div id="map2dWrap" class="hidden" aria-label="نقشه دوبعدی ایران"></div>
     <div id="tooltip" class="hidden"></div>
   </div>
-  <p class="map-hint">نقشه را بچرخانید، بزرگ‌نمایی کنید و روی استان‌ها کلیک کنید</p>
+  <p class="map-hint" id="mapHint">نقشه را بچرخانید، بزرگ‌نمایی کنید و روی استان‌ها کلیک کنید</p>
 </section>
 
 <aside id="panel" class="panel" aria-hidden="true">
@@ -86,11 +80,9 @@
 
 <footer class="footer">
   <p class="footer-note" id="footerNote"></p>
-  <p class="footer-help">برای افزودن یا اصلاح نام‌ها، فایل <code>data/victims.js</code> را ویرایش کنید — ساختار داده و راهنما داخل همان فایل آمده است.</p>
-  <p class="footer-tag">🕯 «فرزندان ایران» — ساخته‌شده برای زنده نگه‌داشتن نام‌ها</p>
+  <p class="footer-tag">«فرزندان ایران» — برای زنده نگه‌داشتن نام‌ها</p>
 </footer>
 
-<div id="candleLayer" aria-hidden="true"></div>
 <div id="toast" class="toast hidden"></div>
 
 <script src="vendor/three.min.js"></script>
