@@ -382,6 +382,7 @@
 
     detail.classList.add('open');
     detail.setAttribute('aria-hidden', 'false');
+    playMemorialSound(v);
   }
   function closeDetail() {
     detail.classList.remove('open');
@@ -430,6 +431,111 @@
   });
 
   /* =====================================================================
+     صدای یادبود — ناقوس سوگوار (Web Audio) + کلید بی‌صدا
+     ===================================================================== */
+  let audioCtx = null;
+  let soundOn = (function () {
+    try { return localStorage.getItem('memorial-sound') !== 'off'; }
+    catch (e) { return true; }
+  })();
+
+  function ensureCtx() {
+    if (!audioCtx) {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return null;
+      audioCtx = new AC();
+    }
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    return audioCtx;
+  }
+
+  /* ناقوسِ آرام و محو — چند صدای سینوسیِ کم‌فرکانس با دمی بلند و اکو */
+  function playBell() {
+    const ctx = ensureCtx();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+
+    const master = ctx.createGain();
+    master.gain.value = 0.9;
+    const lowpass = ctx.createBiquadFilter();
+    lowpass.type = 'lowpass';
+    lowpass.frequency.value = 1400;
+    master.connect(lowpass);
+    lowpass.connect(ctx.destination);
+
+    /* اکوی ملایم برای حس فضا */
+    const delay = ctx.createDelay(1.5);
+    delay.delayTime.value = 0.27;
+    const fb = ctx.createGain(); fb.gain.value = 0.35;
+    const wet = ctx.createGain(); wet.gain.value = 0.55;
+    delay.connect(fb); fb.connect(delay);
+    delay.connect(wet); wet.connect(lowpass);
+    master.connect(delay);
+
+    const partials = [
+      [98,  0.08, 4.2],   // عمق
+      [196, 0.13, 3.8],   // اصلی
+      [233, 0.08, 3.4],   // سوم کوچک — حسِ غم
+      [294, 0.05, 3.0],   // پنجم
+      [392, 0.03, 2.5]
+    ];
+    partials.forEach(function (p) {
+      const osc = ctx.createOscillator();
+      osc.type = 'sine';
+      osc.frequency.value = p[0];
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(0.0001, now);
+      g.gain.exponentialRampToValueAtTime(p[1], now + 0.03);
+      g.gain.exponentialRampToValueAtTime(0.0001, now + p[2]);
+      osc.connect(g); g.connect(master);
+      osc.start(now); osc.stop(now + p[2] + 0.05);
+    });
+
+    /* زنگ دوم، آرام‌تر و دیرتر — مثل پژواک ناقوس */
+    window.setTimeout(function () {
+      if (!audioCtx || audioCtx.state !== 'running') return;
+      const t2 = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      osc.type = 'sine'; osc.frequency.value = 233;
+      const g = audioCtx.createGain();
+      g.gain.setValueAtTime(0.0001, t2);
+      g.gain.exponentialRampToValueAtTime(0.05, t2 + 0.03);
+      g.gain.exponentialRampToValueAtTime(0.0001, t2 + 2.6);
+      osc.connect(g); g.connect(master);
+      osc.start(t2); osc.stop(t2 + 2.7);
+    }, 850);
+  }
+
+  /* موقع باز شدن یادنامه‌ی هر فرد صدا پخش می‌شود */
+  function playMemorialSound(v) {
+    if (!soundOn) return;
+    if (v && v.audio) {
+      try {
+        const a = new Audio(v.audio);
+        a.volume = 0.85;
+        a.play().catch(function () { playBell(); });
+        return;
+      } catch (e) { /* fallback به ناقوس */ }
+    }
+    playBell();
+  }
+
+  /* کلید بی‌صدا */
+  const soundBtn = $('#btnSound');
+  function updateSoundBtn() {
+    if (!soundBtn) return;
+    soundBtn.textContent = soundOn ? '🔊' : '🔇';
+    soundBtn.title = soundOn ? 'خاموش کردن صدای یادبود' : 'روشن کردن صدای یادبود';
+  }
+  soundBtn.addEventListener('click', function () {
+    soundOn = !soundOn;
+    try { localStorage.setItem('memorial-sound', soundOn ? 'on' : 'off'); } catch (e) {}
+    updateSoundBtn();
+    if (soundOn) playBell(); /* پیش‌نمایش کوچک */
+  });
+  updateSoundBtn();
+
+  /* =====================================================================
      بستن‌ها + کیبورد
      ===================================================================== */
   document.querySelectorAll('[data-close]').forEach((el) => {
@@ -476,6 +582,10 @@
   window.APP = {
     openProvinceModal, closeModal, openDetail, closeDetail,
     countOf, toFa, esc, PROVINCES, showTooltip, hideTooltip,
+    sound: {
+      get enabled() { return soundOn; },
+      get ctxState() { return audioCtx ? audioCtx.state : null; }
+    },
     get filtered() { return filtered; }
   };
 
