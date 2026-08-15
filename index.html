@@ -1,14 +1,104 @@
 <!DOCTYPE html>
-<html lang="en">
-
+<html lang="fa" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>فرزندان ایران — یادبود جانباختگان ۱۸ و ۱۹ دی ۱۴۰۴</title>
+<meta name="description" content="یادبودی برای ثبت و زنده‌نگه‌داشتن نام جانباختگان ۱۸ و ۱۹ دی ۱۴۰۴؛ نقشه‌ی تعاملی استان‌های ایران." />
+<meta property="og:title" content="فرزندان ایران — یادبود جانباختگان ۱۸ و ۱۹ دی ۱۴۰۴" />
+<meta property="og:description" content="هر نام، یک زندگی. هر نور، یک یاد." />
+<meta property="og:type" content="website" />
+<link rel="stylesheet" href="css/style.css" />
 </head>
-
 <body>
-    <h1>just for test</h1>
-</body>
 
+<canvas id="bg" aria-hidden="true"></canvas>
+<div class="vignette" aria-hidden="true"></div>
+
+<header class="topbar">
+  <div class="brand"><span class="brand-mark">🕯</span><span>فرزندان ایران</span></div>
+  <div class="topbar-actions">
+    <div class="search-box">
+      <input id="search" type="text" placeholder="جست‌وجوی نام، شهر یا استان…" autocomplete="off" />
+      <div id="searchResults" class="search-results hidden"></div>
+    </div>
+    <button id="btnShare" class="btn ghost">اشتراک‌گذاری</button>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="hero-candle" aria-hidden="true">
+    <svg viewBox="0 0 64 118" width="54" height="100">
+      <defs>
+        <radialGradient id="glowGrad" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#ffd9a0" stop-opacity="0.85"/>
+          <stop offset="55%" stop-color="#ff9e4f" stop-opacity="0.25"/>
+          <stop offset="100%" stop-color="#ff7a3d" stop-opacity="0"/>
+        </radialGradient>
+      </defs>
+      <circle class="candle-glow" cx="32" cy="46" r="30" fill="url(#glowGrad)"/>
+      <g class="flame">
+        <path class="flame-outer" d="M32,12 C37,24 40,32 40,39 A8,8 0 0 1 24,39 C24,32 27,24 32,12 Z" fill="#ffb35c"/>
+        <path class="flame-inner" d="M32,26 C35,34 37,38 37,42 A5,5 0 0 1 27,42 C27,38 29,34 32,26 Z" fill="#ffe9c4"/>
+      </g>
+      <rect x="26" y="60" width="12" height="50" rx="4" fill="#efe4cf"/>
+      <rect x="26" y="60" width="12" height="8" rx="4" fill="#d9c7a6"/>
+      <ellipse cx="32" cy="60" rx="7" ry="3" fill="#f7eedd"/>
+    </svg>
+  </div>
+  <h1 class="hero-title">به یادِ <span class="accent">فرزندان ایران</span></h1>
+  <p class="hero-sub">هر نام، یک زندگی. هر نور، یک یاد.</p>
+  <p class="hero-date">جان‌باختگان ۱۸ و ۱۹ دی ۱۴۰۴</p>
+  <div class="hero-count">
+    <span class="num" id="totalCount">۰</span>
+    <span class="lbl">نامِ مستند تاکنون — فهرست در حال تکمیل</span>
+  </div>
+  <div class="hero-actions">
+    <button id="btnCandle" class="btn primary">🕯 روشن کردن شمع یادبود</button>
+    <span id="candlesLit" class="candles-lit">۰ شمع روشن شده</span>
+  </div>
+</section>
+
+<section class="map-section">
+  <div class="toolbar">
+    <div class="view-toggle" role="group" aria-label="نوع نما">
+      <button id="btn3d" class="seg active">نمای سه‌بعدی</button>
+      <button id="btn2d" class="seg">نمای دوبعدی</button>
+    </div>
+    <div class="legend">
+      <span class="lg"><i class="dot lit"></i>استانِ دارای نامِ مستند</span>
+      <span class="lg"><i class="dot dark"></i>در انتظار تکمیل فهرست</span>
+    </div>
+  </div>
+
+  <div id="mapWrap">
+    <div id="map3d" aria-label="نقشه سه‌بعدی ایران"></div>
+    <div id="map2dWrap" class="hidden" aria-label="نقشه دوبعدی ایران"></div>
+    <div id="tooltip" class="hidden"></div>
+  </div>
+  <p class="map-hint">نقشه را بچرخانید، بزرگ‌نمایی کنید و روی استان‌ها کلیک کنید</p>
+</section>
+
+<aside id="panel" class="panel" aria-hidden="true">
+  <button id="panelClose" class="panel-close" aria-label="بستن">✕</button>
+  <div id="panelContent" class="panel-content"></div>
+</aside>
+
+<footer class="footer">
+  <p class="footer-note" id="footerNote"></p>
+  <p class="footer-help">برای افزودن یا اصلاح نام‌ها، فایل <code>data/victims.js</code> را ویرایش کنید — ساختار داده و راهنما داخل همان فایل آمده است.</p>
+  <p class="footer-tag">🕯 «فرزندان ایران» — ساخته‌شده برای زنده نگه‌داشتن نام‌ها</p>
+</footer>
+
+<div id="candleLayer" aria-hidden="true"></div>
+<div id="toast" class="toast hidden"></div>
+
+<script src="vendor/three.min.js"></script>
+<script src="vendor/SVGLoader.js"></script>
+<script src="vendor/OrbitControls.js"></script>
+<script src="data/iranMap.js"></script>
+<script src="data/victims.js"></script>
+<script src="js/map3d.js"></script>
+<script src="js/app.js"></script>
+</body>
 </html>
