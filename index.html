@@ -29,25 +29,6 @@
 </header>
 
 <section class="hero">
-  <div class="hero-candle" aria-hidden="true">
-    <svg viewBox="0 0 64 118" width="54" height="100">
-      <defs>
-        <radialGradient id="glowGrad" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stop-color="#e8c79a" stop-opacity="0.7"/>
-          <stop offset="55%" stop-color="#c98a5f" stop-opacity="0.2"/>
-          <stop offset="100%" stop-color="#b25f3d" stop-opacity="0"/>
-        </radialGradient>
-      </defs>
-      <circle class="candle-glow" cx="32" cy="46" r="30" fill="url(#glowGrad)"/>
-      <g class="flame">
-        <path class="flame-outer" d="M32,12 C37,24 40,32 40,39 A8,8 0 0 1 24,39 C24,32 27,24 32,12 Z" fill="#d99b62"/>
-        <path class="flame-inner" d="M32,26 C35,34 37,38 37,42 A5,5 0 0 1 27,42 C27,38 29,34 32,26 Z" fill="#f0dfc4"/>
-      </g>
-      <rect x="26" y="60" width="12" height="50" rx="4" fill="#d6cdc0"/>
-      <rect x="26" y="60" width="12" height="8" rx="4" fill="#b8ab99"/>
-      <ellipse cx="32" cy="60" rx="7" ry="3" fill="#e7dfd2"/>
-    </svg>
-  </div>
   <h1 class="hero-title">به یادِ <span class="accent">فرزندان ایران</span></h1>
   <p class="hero-sub">هر نام، یک زندگی. هر نور، یک یاد.</p>
   <p class="hero-date">جان‌باختگان ۱۸ و ۱۹ دی ۱۴۰۴</p>
@@ -58,39 +39,53 @@
 </section>
 
 <section class="map-section">
-  <div class="toolbar">
-    <div class="view-toggle" role="group" aria-label="نوع نما">
-      <button id="btn3d" class="seg active">نمای سه‌بعدی</button>
-      <button id="btn2d" class="seg">نمای دوبعدی</button>
-    </div>
-  </div>
-
   <div id="mapWrap">
-    <div id="map3d" aria-label="نقشه سه‌بعدی ایران"></div>
-    <div id="map2dWrap" class="hidden" aria-label="نقشه دوبعدی ایران"></div>
+    <div id="map2dWrap" aria-label="نقشه ایران"></div>
     <div id="tooltip" class="hidden"></div>
   </div>
-  <p class="map-hint" id="mapHint">نقشه را بچرخانید، بزرگ‌نمایی کنید و روی استان‌ها کلیک کنید</p>
+  <p class="map-hint">برای دیدن فهرست نام‌ها، روی استان کلیک کنید</p>
 </section>
-
-<aside id="panel" class="panel" aria-hidden="true">
-  <button id="panelClose" class="panel-close" aria-label="بستن">✕</button>
-  <div id="panelContent" class="panel-content"></div>
-</aside>
 
 <footer class="footer">
   <p class="footer-note" id="footerNote"></p>
   <p class="footer-tag">«فرزندان ایران» — برای زنده نگه‌داشتن نام‌ها</p>
 </footer>
 
+<!-- پنجره‌ی استان -->
+<div id="modal" class="modal" aria-hidden="true">
+  <div class="modal-backdrop" data-close="modal"></div>
+  <div class="modal-dialog" role="dialog" aria-modal="true">
+    <button class="modal-close" data-close="modal" aria-label="بستن">✕</button>
+    <header class="modal-head">
+      <h2 class="modal-province" id="modalProvince"></h2>
+      <div class="modal-count" id="modalCount"></div>
+    </header>
+    <div class="modal-search">
+      <input id="modalSearch" type="text" placeholder="جست‌وجو در این استان…" autocomplete="off" />
+    </div>
+    <div class="modal-list" id="modalList"></div>
+  </div>
+</div>
+
+<!-- پنجره‌ی جزئیات یک نام -->
+<div id="detail" class="modal" aria-hidden="true">
+  <div class="modal-backdrop" data-close="detail"></div>
+  <div class="detail-dialog" role="dialog" aria-modal="true">
+    <button class="modal-close" data-close="detail" aria-label="بستن">✕</button>
+    <div class="detail-avatar" id="detailAvatar"></div>
+    <h3 class="detail-name" id="detailName"></h3>
+    <div class="detail-meta" id="detailMeta"></div>
+    <div class="detail-divider"></div>
+    <p class="detail-note" id="detailNote"></p>
+    <div class="detail-src" id="detailSrc"></div>
+    <p class="detail-tribute">یادش گرامی</p>
+  </div>
+</div>
+
 <div id="toast" class="toast hidden"></div>
 
-<script src="vendor/three.min.js"></script>
-<script src="vendor/SVGLoader.js"></script>
-<script src="vendor/OrbitControls.js"></script>
 <script src="data/iranMap.js"></script>
 <script src="data/victims.js"></script>
-<script src="js/map3d.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>

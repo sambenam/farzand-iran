@@ -1,6 +1,7 @@
 /* =====================================================================
    فرزندان ایران — یادبود جانباختگان ۱۸ و ۱۹ دی ۱۴۰۴
-   هسته‌ی برنامه: داده‌ها، پنل اسامی، نقشه‌ی دوبعدی، جست‌وجو، شمع یادبود
+   نسخه ۳: نقشه‌ی دوبعدی + پنجره‌ی استان با لیست مجازی (پشتیبانی از
+   هزاران نام) + پنجره‌ی جزئیات هر نام
    ===================================================================== */
 (function () {
   'use strict';
@@ -87,21 +88,22 @@
 
   /* ---------- عناصر DOM ---------- */
   const mapWrap = $('#mapWrap');
-  const map3d = $('#map3d');
   const map2dWrap = $('#map2dWrap');
   const tooltipEl = $('#tooltip');
-  const panel = $('#panel');
-  const panelContent = $('#panelContent');
   const searchInput = $('#search');
   const searchResults = $('#searchResults');
+  const modal = $('#modal');
+  const modalProvince = $('#modalProvince');
+  const modalCount = $('#modalCount');
+  const modalSearch = $('#modalSearch');
+  const modalList = $('#modalList');
+  const detail = $('#detail');
 
-  let selectedPid = null;
-  let view = '3d';
   let svg2d = null;
+  let provincePid = null;
+  let filtered = [];
 
-  /* =====================================================================
-     شمارنده و متن‌های اولیه
-     ===================================================================== */
+  /* ---------- شمارنده و فوتر ---------- */
   function animateCount(el, target, dur) {
     const start = performance.now();
     function step(now) {
@@ -112,86 +114,10 @@
     requestAnimationFrame(step);
   }
   animateCount($('#totalCount'), totalCount, 1400);
-
   $('#footerNote').innerHTML = esc(META.note || '');
 
   /* =====================================================================
-     پنل اسامی
-     ===================================================================== */
-  function openPanel(pid) {
-    selectedPid = pid;
-    if (!pid) { closePanel(); return; }
-    const list = byProvince[pid] || [];
-    const provName = PROVINCES[pid] || pid;
-    let html =
-      '<div class="panel-head">' +
-      '<div class="panel-province">' + esc(provName) +
-      '<span class="count-chip">' + toFa(list.length) + ' نام</span></div>' +
-      '<div class="panel-sub">روی هر نام، کارت آن نمایش داده می‌شود.</div>' +
-      '</div>';
-    if (!list.length) {
-      html += '<div class="panel-empty"><span class="pe-icon">🕊</span>هنوز نامی برای این استان ثبت نشده است.<br>فهرست در حال تکمیل است.</div>';
-    } else {
-      html += list.map((v) =>
-        '<div class="victim-card" id="victim-' + esc(v.id) + '">' +
-        '<div class="victim-avatar">' + esc((v.name || '؟').trim().charAt(0)) + '</div>' +
-        '<div class="victim-body">' +
-        '<div class="victim-name">' + esc(v.name) + '</div>' +
-        '<div class="victim-meta">' +
-          (v.age ? toFa(v.age) + ' ساله' : 'سن نامشخص') + ' · ' + esc(v.city || '') +
-          (v.dateFa ? ' · ' + toFa(v.dateFa) : '') +
-        '</div>' +
-        '<div class="victim-note">' + esc(v.note || 'جزئیات در حال تکمیل.') + '</div>' +
-        '<span class="victim-src">منبع: ' + esc(v.source || 'نامشخص') + '</span>' +
-        '</div></div>'
-      ).join('');
-    }
-    panelContent.innerHTML = html;
-    panel.classList.add('open');
-    panel.setAttribute('aria-hidden', 'false');
-    highlightProvince(pid);
-  }
-
-  function closePanel() {
-    panel.classList.remove('open');
-    panel.setAttribute('aria-hidden', 'true');
-    selectedPid = null;
-    clearHighlight();
-  }
-
-  function flashCard(victimId) {
-    const el = document.getElementById('victim-' + victimId);
-    if (el) {
-      setTimeout(() => {
-        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        el.classList.add('flash');
-        setTimeout(() => el.classList.remove('flash'), 1700);
-      }, 420);
-    }
-  }
-
-  /* ---------- برجسته‌سازی استان ---------- */
-  function highlightProvince(pid) {
-    if (svg2d) {
-      svg2d.querySelectorAll('path').forEach((p) => {
-        p.classList.toggle('prov-selected', p.id === pid);
-      });
-    }
-    if (window.APP3D && window.APP3D.setMeshState) {
-      Object.keys(window.APP3D.meshByPid || {}).forEach((k) => window.APP3D.setMeshState(k));
-    }
-  }
-  function clearHighlight() {
-    if (svg2d) {
-      svg2d.querySelectorAll('path').forEach((p) => p.classList.remove('prov-selected'));
-    }
-    if (window.APP3D && window.APP3D.setMeshState) {
-      Object.keys(window.APP3D.meshByPid || {}).forEach((k) => window.APP3D.setMeshState(k));
-    }
-  }
-
-  /* =====================================================================
-     نقشه‌ی دوبعدی (SVG)
+     نقشه‌ی دوبعدی
      ===================================================================== */
   function init2D() {
     map2dWrap.innerHTML = window.IRAN_SVG;
@@ -203,8 +129,9 @@
       p.classList.add(countOf(pid) > 0 ? 'prov-lit' : 'prov-dark');
       p.addEventListener('mousemove', (e) => showTooltip(e, pid));
       p.addEventListener('mouseleave', hideTooltip);
-      p.addEventListener('click', () => openPanel(pid));
+      p.addEventListener('click', () => openProvinceModal(pid));
     });
+    /* برچسب تعداد روی استان‌های دارای نام */
     const NS = 'http://www.w3.org/2000/svg';
     const g = document.createElementNS(NS, 'g');
     g.setAttribute('class', 'lbl2d');
@@ -242,26 +169,183 @@
   }
   function hideTooltip() { tooltipEl.classList.add('hidden'); }
 
-  /* =====================================================================
-     جابه‌جایی بین نماها
-     ===================================================================== */
-  function setView(v) {
-    view = v;
-    $('#btn3d').classList.toggle('active', v === '3d');
-    $('#btn2d').classList.toggle('active', v === '2d');
-    map3d.style.display = v === '3d' ? '' : 'none';
-    map2dWrap.classList.toggle('hidden', v !== '2d');
-    const hint = document.getElementById('mapHint');
-    if (hint) hint.classList.toggle('hidden', v !== '3d');
-    if (v === '3d' && window.APP3D) window.APP3D.onShow();
-    if (v === '2d' && !svg2d) init2D();
-    if (v === '3d' && selectedPid) highlightProvince(selectedPid);
+  function highlightProvince(pid) {
+    if (svg2d) {
+      svg2d.querySelectorAll('path').forEach((p) => {
+        p.classList.toggle('prov-selected', p.id === pid);
+      });
+    }
   }
-  $('#btn3d').addEventListener('click', () => setView('3d'));
-  $('#btn2d').addEventListener('click', () => setView('2d'));
+  function clearHighlight() {
+    if (svg2d) {
+      svg2d.querySelectorAll('path').forEach((p) => p.classList.remove('prov-selected'));
+    }
+  }
 
   /* =====================================================================
-     جست‌وجو
+     پنجره‌ی استان — لیست مجازی
+     ===================================================================== */
+  const CELL_H = 92, GAP = 10, ROW_H = CELL_H + GAP, MIN_COL = 190;
+  let rafPending = false;
+  let contentEl = null;
+
+  function openProvinceModal(pid, opts) {
+    opts = opts || {};
+    provincePid = pid;
+    const list = opts.override || (byProvince[pid] || []);
+    filtered = list.slice();
+    modalSearch.value = '';
+    modalProvince.textContent = PROVINCES[pid] || pid;
+    modalCount.textContent = list.length
+      ? toFa(list.length) + ' نامِ مستند — فهرست در حال تکمیل'
+      : 'هنوز نامی برای این استان ثبت نشده است';
+    modal.classList.add('open');
+    modal.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+    highlightProvince(pid);
+    modalList.scrollTop = 0;
+    renderList();
+    if (opts.focusId) {
+      scrollToVictim(opts.focusId);
+      openDetail(opts.focusId);
+    }
+  }
+
+  function closeModal() {
+    modal.classList.remove('open');
+    modal.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+    clearHighlight();
+    provincePid = null;
+    closeDetail();
+  }
+
+  function renderList() {
+    rafPending = false;
+    if (!modal.classList.contains('open')) return;
+
+    const prevScroll = modalList.scrollTop;
+
+    if (!filtered.length) {
+      if (contentEl) { contentEl.remove(); contentEl = null; }
+      if (!modalList.querySelector('.list-empty')) {
+        modalList.innerHTML = '<div class="list-empty">نامی یافت نشد.</div>';
+      }
+      modalList.scrollTop = 0;
+      return;
+    }
+    const empty = modalList.querySelector('.list-empty');
+    if (empty) empty.remove();
+
+    /* محتوای پایدار: با پاک‌کردن فرزندان (نه خود کانتینر)،
+       موقعیت اسکرول حفظ می‌شود */
+    if (!contentEl) {
+      contentEl = document.createElement('div');
+      contentEl.className = 'v-content';
+      modalList.appendChild(contentEl);
+    }
+    contentEl.innerHTML = '';
+
+    const innerW = contentEl.clientWidth;
+    const cols = Math.max(1, Math.floor((innerW + GAP) / (MIN_COL + GAP)));
+    const colW = (innerW - (cols - 1) * GAP) / cols;
+    const totalRows = Math.ceil(filtered.length / cols);
+    contentEl.style.height = (totalRows * ROW_H) + 'px';
+
+    const scrollTop = modalList.scrollTop;
+    const viewH = modalList.clientHeight || 600;
+    const startRow = Math.max(0, Math.floor(scrollTop / ROW_H) - 1);
+    const endRow = Math.min(totalRows, Math.ceil((scrollTop + viewH) / ROW_H) + 1);
+
+    for (let r = startRow; r < endRow; r++) {
+      for (let c = 0; c < cols; c++) {
+        const idx = r * cols + c;
+        if (idx >= filtered.length) break;
+        const v = filtered[idx];
+        const cell = document.createElement('button');
+        cell.type = 'button';
+        cell.className = 'v-cell';
+        cell.dataset.id = v.id;
+        cell.style.left = (innerW - colW - c * (colW + GAP)) + 'px';
+        cell.style.top = (r * ROW_H) + 'px';
+        cell.style.width = colW + 'px';
+        cell.style.height = CELL_H + 'px';
+        cell.innerHTML =
+          '<span class="v-top">' +
+            '<span class="v-avatar">' + esc((v.name || '؟').trim().charAt(0)) + '</span>' +
+            '<span class="v-name">' + esc(v.name) + '</span>' +
+          '</span>' +
+          '<span class="v-meta">' + esc([v.age ? toFa(v.age) + ' ساله' : '', v.city].filter(Boolean).join(' · ')) + '</span>' +
+          '<span class="v-note">' + esc(v.note || '') + '</span>';
+        contentEl.appendChild(cell);
+      }
+    }
+
+    /* بازیابی موقعیت اسکرول: مرورگر هنگام بازسازی محتوا
+       ممکن است آن را صفر کند */
+    modalList.scrollTop = prevScroll;
+  }
+
+  function onListScroll() {
+    if (!rafPending) { rafPending = true; requestAnimationFrame(renderList); }
+  }
+  modalList.addEventListener('scroll', onListScroll);
+
+  function scrollToVictim(id) {
+    const idx = filtered.findIndex((v) => v.id === id);
+    if (idx < 0) return;
+    const innerW = contentEl ? contentEl.clientWidth : (modalList.clientWidth - 52);
+    const cols = Math.max(1, Math.floor((innerW + GAP) / (MIN_COL + GAP)));
+    const row = Math.floor(idx / cols);
+    modalList.scrollTop = row * ROW_H;
+    renderList();
+  }
+
+  /* جست‌وجو داخل پنجره */
+  modalSearch.addEventListener('input', () => {
+    const q = (modalSearch.value || '').trim().toLowerCase();
+    const base = byProvince[provincePid] || [];
+    filtered = q
+      ? base.filter((v) =>
+          (v.name || '').toLowerCase().includes(q) ||
+          (v.city || '').toLowerCase().includes(q) ||
+          (v.note || '').toLowerCase().includes(q))
+      : base.slice();
+    modalList.scrollTop = 0;
+    renderList();
+  });
+
+  /* کلیک روی کارت → جزئیات */
+  modalList.addEventListener('click', (e) => {
+    const cell = e.target.closest('.v-cell');
+    if (cell) openDetail(cell.dataset.id);
+  });
+
+  /* =====================================================================
+     پنجره‌ی جزئیات یک نام
+     ===================================================================== */
+  function openDetail(id) {
+    const v = victims.find((x) => x.id === id);
+    if (!v) return;
+    $('#detailAvatar').textContent = (v.name || '؟').trim().charAt(0);
+    $('#detailName').textContent = v.name;
+    $('#detailMeta').textContent = [
+      v.age ? toFa(v.age) + ' ساله' : 'سن نامشخص',
+      v.city,
+      v.dateFa ? toFa(v.dateFa) : ''
+    ].filter(Boolean).join(' · ');
+    $('#detailNote').textContent = v.note || 'جزئیات در حال تکمیل.';
+    $('#detailSrc').textContent = 'منبع: ' + (v.source || 'نامشخص');
+    detail.classList.add('open');
+    detail.setAttribute('aria-hidden', 'false');
+  }
+  function closeDetail() {
+    detail.classList.remove('open');
+    detail.setAttribute('aria-hidden', 'true');
+  }
+
+  /* =====================================================================
+     جست‌وجوی سراسری
      ===================================================================== */
   function doSearch(q) {
     q = (q || '').trim();
@@ -287,8 +371,7 @@
         el.addEventListener('click', () => {
           const v = victims.find((x) => x.id === el.dataset.id);
           if (!v) return;
-          openPanel(v.provinceId);
-          flashCard(v.id);
+          openProvinceModal(v.provinceId, { focusId: v.id });
           searchResults.classList.add('hidden');
           searchInput.value = v.name;
         });
@@ -301,15 +384,32 @@
   document.addEventListener('click', (e) => {
     if (!e.target.closest('.search-box')) searchResults.classList.add('hidden');
   });
-  searchInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') searchResults.classList.add('hidden');
+
+  /* =====================================================================
+     بستن‌ها + کیبورد
+     ===================================================================== */
+  document.querySelectorAll('[data-close]').forEach((el) => {
+    el.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (el.getAttribute('data-close') === 'detail') closeDetail();
+      else closeModal();
+    });
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    if (detail.classList.contains('open')) closeDetail();
+    else if (modal.classList.contains('open')) closeModal();
+    searchResults.classList.add('hidden');
+  });
+  window.addEventListener('resize', () => {
+    if (modal.classList.contains('open')) renderList();
   });
 
   /* =====================================================================
      اشتراک‌گذاری
      ===================================================================== */
   $('#btnShare').addEventListener('click', () => {
-    const text = '🕯 یادبود جانباختگان ۱۸ و ۱۹ دی ۱۴۰۴ — «فرزندان ایران»';
+    const text = 'یادبود جانباختگان ۱۸ و ۱۹ دی ۱۴۰۴ — «فرزندان ایران»';
     const url = location.href;
     const toast = $('#toast');
     function show(msg) {
@@ -328,27 +428,13 @@
     }
   });
 
-  /* =====================================================================
-     بستن پنل + کیبورد
-     ===================================================================== */
-  $('#panelClose').addEventListener('click', closePanel);
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') { closePanel(); searchResults.classList.add('hidden'); }
-  });
-
-  /* ---------- API عمومی برای نقشه‌ی سه‌بعدی ---------- */
+  /* ---------- API عمومی ---------- */
   window.APP = {
-    openPanel, closePanel, highlightProvince, clearHighlight,
-    showTooltip, hideTooltip, flashCard,
-    countOf, toFa, esc, PROVINCES,
-    mapWrap,
-    get selectedPid() { return selectedPid; },
-    set selectedPid(v) { selectedPid = v; },
-    get view() { return view; }
+    openProvinceModal, closeModal, openDetail, closeDetail,
+    countOf, toFa, esc, PROVINCES, showTooltip, hideTooltip,
+    get filtered() { return filtered; }
   };
 
   /* ---------- شروع ---------- */
   init2D();
-  setView('3d');
-  if (window.initMap3D) window.initMap3D();
 })();
