@@ -186,6 +186,7 @@
      پنجره‌ی استان — لیست مجازی
      ===================================================================== */
   const CELL_H = 108, GAP = 10, ROW_H = CELL_H + GAP;
+  let firstRenderDone = false;
 
   /* تعداد ستون‌ها: ۳ در دسکتاپ، ۲ در تبلت، ۱ در موبایل */
   function calcCols(width) {
@@ -211,6 +212,7 @@
     document.body.style.overflow = 'hidden';
     highlightProvince(pid);
     modalList.scrollTop = 0;
+    firstRenderDone = false;
     renderList();
     if (opts.focusId) {
       scrollToVictim(opts.focusId);
@@ -251,6 +253,7 @@
       contentEl.className = 'v-content';
       modalList.appendChild(contentEl);
     }
+    contentEl.classList.toggle('anim', !firstRenderDone);
     contentEl.innerHTML = '';
 
     const innerW = contentEl.clientWidth;
@@ -277,6 +280,7 @@
         cell.style.top = (r * ROW_H) + 'px';
         cell.style.width = colW + 'px';
         cell.style.height = CELL_H + 'px';
+        cell.style.setProperty('--i', idx);
         cell.innerHTML =
           '<span class="v-top">' +
             '<span class="v-avatar">' + esc((v.name || '؟').trim().charAt(0)) + '</span>' +
@@ -291,6 +295,7 @@
     /* بازیابی موقعیت اسکرول: مرورگر هنگام بازسازی محتوا
        ممکن است آن را صفر کند */
     modalList.scrollTop = prevScroll;
+    firstRenderDone = true;
   }
 
   function onListScroll() {
@@ -337,12 +342,25 @@
     $('#detailAvatar').textContent = (v.name || '؟').trim().charAt(0);
     $('#detailName').textContent = v.name;
     $('#detailMeta').textContent = [
-      v.age ? toFa(v.age) + ' ساله' : 'سن نامشخص',
       v.city,
       v.dateFa ? toFa(v.dateFa) : ''
     ].filter(Boolean).join(' · ');
     $('#detailNote').textContent = v.note || 'جزئیات در حال تکمیل.';
     $('#detailSrc').textContent = 'منبع: ' + (v.source || 'نامشخص');
+
+    /* جدول اطلاعات: تولد، محل زندگی، محل شهادت، شغل، تاریخ، سن */
+    const infoRows = [];
+    if (v.born) infoRows.push(['تاریخ تولد', v.born]);
+    if (v.lived) infoRows.push(['محل زندگی', v.lived]);
+    if (v.killedAt) infoRows.push(['محل شهادت', v.killedAt]);
+    if (v.occupation) infoRows.push(['شغل / تحصیل', v.occupation]);
+    if (v.dateFa) infoRows.push(['تاریخ شهادت', toFa(v.dateFa)]);
+    if (v.age) infoRows.push(['سن', toFa(v.age) + ' ساله']);
+    const infoEl = $('#detailInfo');
+    infoEl.innerHTML = infoRows.map((r) =>
+      '<span class="info-chip"><span class="info-k">' + esc(r[0]) + '</span>' +
+      '<span class="info-v">' + esc(r[1]) + '</span></span>'
+    ).join('');
 
     /* رسانه‌های اختیاری: ویدیو، عکس یا صدا */
     const media = $('#detailMedia');
