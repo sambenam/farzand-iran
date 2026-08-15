@@ -434,13 +434,9 @@
   });
 
   /* =====================================================================
-     صدای یادبود — ناقوس سوگوار (Web Audio) + کلید بی‌صدا
+     صدای یادبود — ناقوس سوگوار (Web Audio) به‌عنوان جایگزین
      ===================================================================== */
   let audioCtx = null;
-  let soundOn = (function () {
-    try { return localStorage.getItem('memorial-sound') !== 'off'; }
-    catch (e) { return true; }
-  })();
 
   function ensureCtx() {
     if (!audioCtx) {
@@ -513,7 +509,6 @@
      اولویت: صدای مراد ویسی (voice) → در نبودش، ناقوس یادبود */
   let currentVoice = null;
   function playMemorialSound(v) {
-    if (!soundOn) return;
     if (currentVoice) {
       try { currentVoice.pause(); currentVoice = null; } catch (e) {}
     }
@@ -528,21 +523,6 @@
     }
     playBell();
   }
-
-  /* کلید بی‌صدا */
-  const soundBtn = $('#btnSound');
-  function updateSoundBtn() {
-    if (!soundBtn) return;
-    soundBtn.textContent = soundOn ? '🔊' : '🔇';
-    soundBtn.title = soundOn ? 'خاموش کردن صدای یادبود' : 'روشن کردن صدای یادبود';
-  }
-  soundBtn.addEventListener('click', function () {
-    soundOn = !soundOn;
-    try { localStorage.setItem('memorial-sound', soundOn ? 'on' : 'off'); } catch (e) {}
-    updateSoundBtn();
-    if (soundOn) playBell(); /* پیش‌نمایش کوچک */
-  });
-  updateSoundBtn();
 
   /* =====================================================================
      بستن‌ها + کیبورد
@@ -592,7 +572,6 @@
     openProvinceModal, closeModal, openDetail, closeDetail,
     countOf, toFa, esc, PROVINCES, showTooltip, hideTooltip,
     sound: {
-      get enabled() { return soundOn; },
       get ctxState() { return audioCtx ? audioCtx.state : null; }
     },
     get filtered() { return filtered; }

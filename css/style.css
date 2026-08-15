@@ -119,7 +119,6 @@ body {
 }
 .btn:hover { background: rgba(255,255,255,.09); border-color: rgba(255,255,255,.2); transform: translateY(-1px); }
 .btn:active { transform: translateY(0) scale(.98); }
-#btnSound { padding: 10px 14px; font-size: 1rem; line-height: 1; }
 
 /* ============ hero ============ */
 .hero {
