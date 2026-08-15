@@ -82,7 +82,11 @@ body {
   display: flex; align-items: center; justify-content: space-between; gap: 14px;
   padding: 20px 28px; flex-wrap: wrap;
 }
-.brand { font-weight: 800; font-size: 1.12rem; letter-spacing: .2px; color: var(--gold-soft); }
+.brand {
+  font-weight: 800; font-size: 1.12rem; letter-spacing: .2px;
+  background: linear-gradient(115deg, #b02a31 0%, #701318 46%, #260507 100%);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
 .topbar-actions { display: flex; align-items: center; gap: 12px; }
 
 .search-box { position: relative; }
@@ -298,7 +302,11 @@ body {
   color: var(--faint); font-size: .85rem; max-width: 780px; margin: 0 auto;
 }
 .footer-note { color: var(--muted); }
-.footer-tag { color: var(--gold); font-weight: 600; margin-top: 18px; }
+.footer-tag {
+  font-weight: 600; margin-top: 18px;
+  background: linear-gradient(115deg, #a8272e 0%, #6a1016 50%, #200406 100%);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
 
 /* ============ toast ============ */
 .toast {
