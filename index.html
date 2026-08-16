@@ -12,6 +12,11 @@
 </head>
 <body>
 
+<video id="bgVideo" autoplay muted loop playsinline preload="auto" aria-hidden="true">
+  <source src="assets/media/bg-memorial.mp4" type="video/mp4" />
+</video>
+<div class="bg-shade" aria-hidden="true"></div>
+
 <canvas id="bg" aria-hidden="true"></canvas>
 <div class="fog fog-a" aria-hidden="true"></div>
 <div class="fog fog-b" aria-hidden="true"></div>
@@ -39,11 +44,23 @@
 </section>
 
 <section class="map-section">
+  <div class="map-toolbar">
+    <div class="zoom-controls" role="group" aria-label="بزرگ‌نمایی نقشه">
+      <button id="zoomIn" class="zbtn" title="بزرگ‌نمایی">＋</button>
+      <button id="zoomOut" class="zbtn" title="کوچک‌نمایی">－</button>
+      <button id="zoomReset" class="zbtn" title="بازنشانی نما">↺</button>
+    </div>
+    <div class="prov-jump">
+      <select id="provJump" aria-label="پرش به استان">
+        <option value="">— پرش مستقیم به استان —</option>
+      </select>
+    </div>
+  </div>
   <div id="mapWrap">
     <div id="map2dWrap" aria-label="نقشه ایران"></div>
     <div id="tooltip" class="hidden"></div>
   </div>
-  <p class="map-hint">برای دیدن فهرست نام‌ها، روی استان کلیک کنید</p>
+  <p class="map-hint">روی استان کلیک کنید تا فهرست نام‌ها باز شود · برای زوم، با چرخ ماوس بچرخانید یا نقشه را بکشید</p>
 </section>
 
 <footer class="footer">

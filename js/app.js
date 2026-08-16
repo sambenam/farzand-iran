@@ -117,42 +117,157 @@
   $('#footerNote').innerHTML = esc(META.note || '');
 
   /* =====================================================================
-     نقشه‌ی دوبعدی
+     نقشه‌ی دوبعدی + زوم و جابه‌جایی
      ===================================================================== */
+  let mapG = null;
+  const labels = [];               // {g, cx, cy} برای برچسب‌های با اندازه‌ی ثابت
+  const mapView = { tx: 0, ty: 0, s: 1 };
+  const MIN_S = 1, MAX_S = 5;
+  const dragState = { down: false, moved: false, sx: 0, sy: 0 };
+
+  function applyMapTransform() {
+    if (!mapG) return;
+    mapG.setAttribute('transform', 'translate(' + mapView.tx + ',' + mapView.ty + ') scale(' + mapView.s + ')');
+    labels.forEach(function (l) {
+      l.g.setAttribute('transform', 'translate(' + (mapView.tx + mapView.s * l.cx) + ',' + (mapView.ty + mapView.s * l.cy) + ')');
+    });
+  }
+
+  function screenToView(cx, cy) {
+    const ctm = svg2d.getScreenCTM();
+    if (!ctm) return null;
+    const pt = svg2d.createSVGPoint();
+    pt.x = cx; pt.y = cy;
+    return pt.matrixTransform(ctm.inverse());
+  }
+
+  function zoomAt(cx, cy, factor) {
+    const raw = screenToView(cx, cy);
+    if (!raw) return;
+    const vx = (raw.x - mapView.tx) / mapView.s;
+    const vy = (raw.y - mapView.ty) / mapView.s;
+    const ns = Math.min(MAX_S, Math.max(MIN_S, mapView.s * factor));
+    if (ns === mapView.s) return;
+    mapView.tx = mapView.tx + (mapView.s - ns) * vx;
+    mapView.ty = mapView.ty + (mapView.s - ns) * vy;
+    mapView.s = ns;
+    applyMapTransform();
+  }
+
+  function panBy(sx1, sy1, sx2, sy2) {
+    const a = screenToView(sx1, sy1);
+    const b = screenToView(sx2, sy2);
+    if (!a || !b) return;
+    mapView.tx += b.x - a.x;
+    mapView.ty += b.y - a.y;
+    applyMapTransform();
+  }
+
   function init2D() {
     map2dWrap.innerHTML = window.IRAN_SVG;
     svg2d = map2dWrap.querySelector('svg');
     svg2d.id = 'map2dSvg';
     svg2d.setAttribute('preserveAspectRatio', 'xMidYMid meet');
-    svg2d.querySelectorAll('path').forEach((p) => {
+
+    const NS = 'http://www.w3.org/2000/svg';
+
+    /* همه‌ی شکل‌ها را داخل گروهِ تبدیل‌پذیر قرار بده */
+    mapG = document.createElementNS(NS, 'g');
+    mapG.id = 'mapTransform';
+    const paths = Array.from(svg2d.querySelectorAll('path'));
+    paths.forEach(function (p) { mapG.appendChild(p); });
+    svg2d.appendChild(mapG);
+
+    paths.forEach(function (p) {
       const pid = p.id;
       p.classList.add(countOf(pid) > 0 ? 'prov-lit' : 'prov-dark');
-      p.addEventListener('mousemove', (e) => showTooltip(e, pid));
+      p.addEventListener('mousemove', function (e) { showTooltip(e, pid); });
       p.addEventListener('mouseleave', hideTooltip);
-      p.addEventListener('click', () => openProvinceModal(pid));
+      p.addEventListener('click', function () {
+        if (!dragState.moved) openProvinceModal(pid);
+      });
     });
-    /* برچسب تعداد روی استان‌های دارای نام */
-    const NS = 'http://www.w3.org/2000/svg';
-    const g = document.createElementNS(NS, 'g');
-    g.setAttribute('class', 'lbl2d');
-    Object.keys(byProvince).forEach((pid) => {
+
+    /* برچسب تعداد: اندازه‌ی ثابت، اما با حرکت نقشه جابه‌جا می‌شود */
+    Object.keys(byProvince).forEach(function (pid) {
       const path = svg2d.getElementById(pid);
       if (!path) return;
       try {
         const bb = path.getBBox();
         const cx = bb.x + bb.width / 2, cy = bb.y + bb.height / 2;
+        const g = document.createElementNS(NS, 'g');
+        g.setAttribute('class', 'lbl2d');
         const circle = document.createElementNS(NS, 'circle');
-        circle.setAttribute('cx', cx); circle.setAttribute('cy', cy - 6); circle.setAttribute('r', 8);
+        circle.setAttribute('r', 8);
         const txt = document.createElementNS(NS, 'text');
-        txt.setAttribute('x', cx); txt.setAttribute('y', cy - 6);
         txt.setAttribute('text-anchor', 'middle');
         txt.setAttribute('dominant-baseline', 'central');
         txt.setAttribute('font-size', '10');
         txt.textContent = toFa(countOf(pid));
         g.appendChild(circle); g.appendChild(txt);
+        svg2d.appendChild(g);
+        labels.push({ g: g, cx: cx, cy: cy - 6 });
       } catch (e) { /* getBBox */ }
     });
-    svg2d.appendChild(g);
+
+    applyMapTransform();
+
+    /* ---------- تعامل: کشیدن، زوم با چرخ، دکمه‌ها ---------- */
+    map2dWrap.addEventListener('pointerdown', function (e) {
+      dragState.down = true;
+      dragState.moved = false;
+      dragState.sx = e.clientX;
+      dragState.sy = e.clientY;
+    });
+    map2dWrap.addEventListener('pointermove', function (e) {
+      if (!dragState.down) return;
+      const dx = e.clientX - dragState.sx;
+      const dy = e.clientY - dragState.sy;
+      if (!dragState.moved && Math.hypot(dx, dy) > 5) dragState.moved = true;
+      if (dragState.moved) {
+        panBy(dragState.sx, dragState.sy, e.clientX, e.clientY);
+        dragState.sx = e.clientX;
+        dragState.sy = e.clientY;
+      }
+    });
+    function endDrag() {
+      dragState.down = false;
+      window.setTimeout(function () { dragState.moved = false; }, 0);
+    }
+    map2dWrap.addEventListener('pointerup', endDrag);
+    map2dWrap.addEventListener('pointerleave', endDrag);
+
+    map2dWrap.addEventListener('wheel', function (e) {
+      e.preventDefault();
+      zoomAt(e.clientX, e.clientY, e.deltaY < 0 ? 1.18 : 1 / 1.18);
+    }, { passive: false });
+
+    $('#zoomIn').addEventListener('click', function () {
+      const r = map2dWrap.getBoundingClientRect();
+      zoomAt(r.left + r.width / 2, r.top + r.height / 2, 1.3);
+    });
+    $('#zoomOut').addEventListener('click', function () {
+      const r = map2dWrap.getBoundingClientRect();
+      zoomAt(r.left + r.width / 2, r.top + r.height / 2, 1 / 1.3);
+    });
+    $('#zoomReset').addEventListener('click', function () {
+      mapView.tx = 0; mapView.ty = 0; mapView.s = 1;
+      applyMapTransform();
+    });
+
+    /* ---------- منوی پرش مستقیم به استان ---------- */
+    const provJump = $('#provJump');
+    Object.keys(PROVINCES).forEach(function (pid) {
+      const opt = document.createElement('option');
+      opt.value = pid;
+      const c = countOf(pid);
+      opt.textContent = PROVINCES[pid] + (c ? ' (' + toFa(c) + ')' : '');
+      provJump.appendChild(opt);
+    });
+    provJump.addEventListener('change', function () {
+      if (provJump.value) openProvinceModal(provJump.value);
+      provJump.value = '';
+    });
   }
 
   function showTooltip(e, pid) {
