@@ -94,7 +94,6 @@
   const searchResults = $('#searchResults');
   const modal = $('#modal');
   const modalProvince = $('#modalProvince');
-  const modalCount = $('#modalCount');
   const modalSearch = $('#modalSearch');
   const modalList = $('#modalList');
   const detail = $('#detail');
@@ -262,7 +261,6 @@
     let provMenuOpen = false;
 
     Object.keys(PROVINCES).forEach(function (pid) {
-      const c = countOf(pid);
       const item = document.createElement('button');
       item.type = 'button';
       item.className = 'prov-jump-item';
@@ -272,17 +270,7 @@
       const nameSpan = document.createElement('span');
       nameSpan.textContent = PROVINCES[pid];
 
-      const badge = document.createElement('span');
-      if (c) {
-        badge.className = 'pj-count';
-        badge.textContent = toFa(c);
-      } else {
-        badge.className = 'pj-empty';
-        badge.textContent = 'در انتظار';
-      }
-
       item.appendChild(nameSpan);
-      item.appendChild(badge);
       item.addEventListener('click', function () {
         closeProvMenu();
         provJumpLabel.textContent = PROVINCES[pid];
@@ -360,9 +348,6 @@
     filtered = list.slice();
     modalSearch.value = '';
     modalProvince.textContent = PROVINCES[pid] || pid;
-    modalCount.textContent = list.length
-      ? toFa(list.length) + ' نامِ مستند — فهرست در حال تکمیل'
-      : 'هنوز نامی برای این استان ثبت نشده است';
     modal.classList.add('open');
     modal.setAttribute('aria-hidden', 'false');
     document.body.style.overflow = 'hidden';
@@ -394,7 +379,10 @@
     if (!filtered.length) {
       if (contentEl) { contentEl.remove(); contentEl = null; }
       if (!modalList.querySelector('.list-empty')) {
-        modalList.innerHTML = '<div class="list-empty">نامی یافت نشد.</div>';
+        const msg = (byProvince[provincePid] || []).length === 0
+          ? 'هنوز نامی برای این استان ثبت نشده است.'
+          : 'نامی یافت نشد.';
+        modalList.innerHTML = '<div class="list-empty">' + msg + '</div>';
       }
       modalList.scrollTop = 0;
       return;
