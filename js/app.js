@@ -255,18 +255,59 @@
       applyMapTransform();
     });
 
-    /* ---------- منوی پرش مستقیم به استان ---------- */
-    const provJump = $('#provJump');
+    /* ---------- منوی انتخاب استان (سفارشی) ---------- */
+    const provJumpBtn = $('#provJumpBtn');
+    const provJumpMenu = $('#provJumpMenu');
+    const provJumpLabel = $('#provJumpLabel');
+    let provMenuOpen = false;
+
     Object.keys(PROVINCES).forEach(function (pid) {
-      const opt = document.createElement('option');
-      opt.value = pid;
       const c = countOf(pid);
-      opt.textContent = PROVINCES[pid] + (c ? ' (' + toFa(c) + ')' : '');
-      provJump.appendChild(opt);
+      const item = document.createElement('button');
+      item.type = 'button';
+      item.className = 'prov-jump-item';
+      item.dataset.pid = pid;
+      item.setAttribute('role', 'option');
+
+      const nameSpan = document.createElement('span');
+      nameSpan.textContent = PROVINCES[pid];
+
+      const badge = document.createElement('span');
+      if (c) {
+        badge.className = 'pj-count';
+        badge.textContent = toFa(c);
+      } else {
+        badge.className = 'pj-empty';
+        badge.textContent = 'در انتظار';
+      }
+
+      item.appendChild(nameSpan);
+      item.appendChild(badge);
+      item.addEventListener('click', function () {
+        closeProvMenu();
+        provJumpLabel.textContent = PROVINCES[pid];
+        openProvinceModal(pid);
+      });
+      provJumpMenu.appendChild(item);
     });
-    provJump.addEventListener('change', function () {
-      if (provJump.value) openProvinceModal(provJump.value);
-      provJump.value = '';
+
+    function closeProvMenu() {
+      provMenuOpen = false;
+      provJumpMenu.classList.add('hidden');
+      provJumpBtn.classList.remove('open');
+      provJumpBtn.setAttribute('aria-expanded', 'false');
+    }
+
+    provJumpBtn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      provMenuOpen = !provMenuOpen;
+      provJumpMenu.classList.toggle('hidden', !provMenuOpen);
+      provJumpBtn.classList.toggle('open', provMenuOpen);
+      provJumpBtn.setAttribute('aria-expanded', provMenuOpen ? 'true' : 'false');
+    });
+
+    document.addEventListener('click', function (e) {
+      if (!e.target.closest('.prov-jump')) closeProvMenu();
     });
   }
 
