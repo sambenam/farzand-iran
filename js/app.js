@@ -382,7 +382,6 @@
 
     detail.classList.add('open');
     detail.setAttribute('aria-hidden', 'false');
-    playMemorialSound(v);
   }
   function closeDetail() {
     detail.classList.remove('open');
